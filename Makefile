@@ -21,7 +21,7 @@ dockerrun: dockerclean
 	docker run -d \
 			--name ${CONTAINER_NAME} \
 			--restart always \
-			-v ${CURDIR}\data:\app\data \
+			-v ${CURDIR}/data:/app/data \
 			-p 8091:80 \
 			${CONTAINER_NAME}
 
