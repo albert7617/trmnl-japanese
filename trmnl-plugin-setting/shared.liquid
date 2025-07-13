@@ -1,0 +1,151 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNgIRecGo7nphbeZ04Sc13ka07paqdeTu0WR1IM4kNcpmBAUSHSQX0FslNhTDadL4O5SAGapGt4FodqL8My0mA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+  #qrcode {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+  .japanese-word-container {
+    width: 100%;
+    height: 100%;
+  }
+
+  .japanese-word-container, .meaning-wrapper, .sentence, .concept_light-representation {
+    display: flex;
+    flex-direction: column; /* Stacks children vertically */
+    justify-content: center; /* Horizontally centers the child divs */
+    align-items: center;    /* Vertically centers the child divs */
+  }
+
+  .concept_light-representation {
+    height: 70%;                /* Each child takes 50% of parent's height */
+  }
+  .meaning-wrapper {
+    height: 30%;                /* Each child takes 50% of parent's height */
+  }
+
+  .japanese.japanese_gothic.clearfix, .concept_light-representation {
+    font-weight: bold;
+  }
+
+  .concept_light-representation {
+    justify-content: flex-end;      /* Puts content at the bottom */
+  }
+
+  .meaning-wrapper {
+    justify-content: flex-start;      /* Puts content at the bottom */
+  }
+
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, "Source Han Sans", "源ノ角ゴシック", "Hiragino Sans", "HiraKakuProN-W3", "Hiragino Kaku Gothic ProN W3", "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "Noto Sans", "Noto Sans CJK JP", "メイリオ", Meiryo, "游ゴシック", YuGothic, "ＭＳ Ｐゴシック", "MS PGothic", "ＭＳ ゴシック", "MS Gothic", sans-serif;
+  }
+
+  .furigana {
+    display: block;
+    font-size: 45%;
+    min-height: 1.15em;
+  }
+
+  .furigana .kanji {
+    min-width: 2.25em;
+  }
+
+  .furigana span {
+    display: inline-block;
+    text-align: center;
+    min-width: 2em;
+    line-height: 1.15;
+  }
+
+  .sentences .japanese .furigana {
+    display: block;
+    font-size: 12px;
+    user-select: none;
+  }
+
+  .representation .text {
+    display: block;
+  }
+
+  .japanese_gothic {
+    padding: 0;
+    margin-bottom: 0;
+  }
+
+  .sentences ul.japanese li {
+    display: inline-block;
+    font-size: 18px;
+    padding-left: 0;
+    margin-top: 35px;
+  }
+
+  .unlinked {
+    display: flex;
+    justify-content: center;
+  }
+
+  .kanji {
+    position: relative;
+    bottom: -22px;
+  }
+</style>
+<div class="layout">
+  <div class="japanese-word-container" id="trmnl-container"></div>
+  <div id="qrcode"></div>
+</div>
+
+<div class="title_bar">
+  <img class="image" src="data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDUxMiA1MTIiIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIj48ZGVmcz48aW1hZ2UgIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBpZD0iaW1nMSIgaHJlZj0iZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFnQUFBQUlBQVFNQUFBRE90a2E1QUFBQUFYTlNSMElCMmNrc2Z3QUFBQU5RVEZSRkFBQUFwM285MmdBQUFJeEpSRUZVZUp6dHpERU5BQUFNQTZEVnYrbUo2TlVFQkpBclJTQVFDQVFDZ1VBZ0VBZ0VBb0ZBSUJBSUJBS0JRQ0FRQ0FRQ2dVQWdFQWdFQW9GQUlCQUlCQUtCUUNBUUNBUUNnVUFnRUFnRUFvRkFJQkFJQkFLQlFDQVFDQVFDZ1VBZ0VBZ0VBb0ZBSUJBSUJBS0JRQ0FRQ0FRQ2dVQWdFQWdFQW9GQUlCQUlCQUtCUUNBUUNBUUNnV0E3ZU1xZUFnRWlSRDNIQUFBQUFFbEZUa1N1UW1DQyIvPjwvZGVmcz48c3R5bGU+LmF7ZmlsbDojZmZmfTwvc3R5bGU+PHVzZSAgaHJlZj0iI2ltZzEiIHg9IjAiIHk9IjAiLz48cGF0aCBjbGFzcz0iYSIgZD0ibTE4NC4zIDMxNWwtMTEuMS0zMC4zcTEwOC43LTYuOCAxMDguNy02OC43IDAtNDYuOC01OS4yLTYxLjktMjYuMSA3NS43LTYzLjIgMTExLjQtMzcuMSAzNS44LTY4LjggMzUuOC0yMi0wLjEtMzguNS0xNi42LTE1LjEtMTcuOC0xNS4xLTQ0IDAtNzEuNSA4Ni42LTEwNS44bDEuNC00Ni44aC03NC4ydi0zMC4ybDQ1LjMgMi43IDMxLjctMS40IDQuMS0zOS44IDMwLjMgMS4zLTQuMiAzNy4yIDEyOS4zLTIuOCAxLjMgMjguOS0xMzMuMyA0LjEtMS40IDM3LjEgMzUuOC00LjEgMTIuMyAxLjQgMi44LTE2LjUgMzAuMiA2LjktNC4xIDEzLjdxODMuOSAyMC42IDgzLjkgOTAuOCAwIDc4LjMtMTMwLjcgOTcuNnptOS43LTE2NWwtNDEuMyA1LjV2MzUuOGwtNC4xIDQ1LjNxMjcuNS0zMyA0NS40LTg2LjZ6bS02NiAxMDUuOXEtNC4yLTIzLjQtNC4yLTkwLjgtNTcuNyAyOC45LTU3LjcgNzQuMyAwIDEyLjMgOC4yIDIzLjMgOS43IDkuNyAxOS4zIDkuNyAxNS4xIDAgMzQuNC0xNi41eiIvPjxwYXRoIGNsYXNzPSJhIiBkPSJtNDIxLjYgNDAyLjNsLTQ3LjMtMTI3LjctNDcuMSAxMjcuN3ptLTE2NC44IDk0LjdsOTgtMjU2LjZoMzkuM2w5Ny44IDI1Ni42aC0zNi4xbC0yMy40LTY1LjhoLTExNS42bC0yMy40IDY1Ljh6Ii8+PC9zdmc+">
+  <span class="title">毎日の単語</span>
+</div>
+
+<div id="compressed-data" style="display: none;"> {{ compressed  }}</div>
+<div id="word-offset" style="display: none;"> {{ trmnl.plugin_settings.custom_fields_values.word_offset }}</div>
+
+<script>
+  function decompressText(compressedText) {
+    // Decode the base64 string to binary data
+    const binaryString = atob(compressedText);
+
+    // Convert the binary string to a Uint8Array
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Decompress using zlib (pako is a popular zlib library for browsers)
+    // Note: You'll need to include pako.js for this to work
+    const decompressedBytes = pako.inflate(bytes);
+
+    // Convert the decompressed bytes back to a string
+    const decoder = new TextDecoder('utf-8');
+    return decoder.decode(decompressedBytes);
+  }
+
+  function showWord(data, offset) {
+    const rawArr = JSON.parse(decompressText(data));
+    document.getElementById("trmnl-container").innerHTML = rawArr[offset];
+
+    const parentHeight = document.querySelector('.concept_light-representation').clientHeight;
+    const fontSize = (parentHeight * 0.5);
+    document.querySelector('.concept_light-representation').style.fontSize = `${fontSize}px`;
+
+    const textOnly = document.getElementsByClassName("text")[0].innerHTML.replace(/<[^>]*>/g, '').trim();
+    console.log(document.getElementById("qrcode"))
+
+    var qrcode = new QRCode("qrcode", {
+      text: `https://jisho.org/search/${textOnly}`,
+      width: 72,
+      height: 72,
+      colorDark : "#000000",
+      colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.H
+    });
+  }
+
+  const wordOffset = Number(document.getElementById("word-offset").innerHTML);
+  const compressedData = document.getElementById("compressed-data").innerHTML;
+  showWord(compressedData, wordOffset);
+
+</script>

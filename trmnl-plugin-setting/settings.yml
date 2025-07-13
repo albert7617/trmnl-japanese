@@ -1,0 +1,28 @@
+---
+strategy: webhook
+no_screen_padding: 'no'
+dark_mode: 'no'
+static_data: ''
+polling_verb: get
+polling_url: ''
+polling_headers: ''
+polling_body: ''
+id: [redacted]
+custom_fields:
+- keyname: doesnt_matter
+  name: About This Plugin
+  field_type: author_bio
+  description: Daily Japanese with furigana
+  github_url: https://github.com/albert7617/trmnl-japanese
+- keyname: word_offset
+  field_type: select
+  options:
+  - 0: 0
+  - 1: 1
+  - 2: 2
+  - 3: 3
+  default: 0
+  name: Word offset for mashup
+  description: Useful for displaying 4 instance in mashup
+name: Japanese word of the day (with furigana)
+refresh_interval: 1440

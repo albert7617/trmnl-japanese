@@ -1,0 +1,49 @@
+<style>
+
+  .japanese-word-container {
+    justify-content: flex-start;
+  }
+  
+  .kanji {
+    position: relative;
+    bottom: -8px;
+  }
+  .concept_light-representation {
+    height: 40%;
+  }
+  .meaning-wrapper {
+    flex-basis: auto;
+    position: relative;
+    top: 0px;
+  }
+
+  .meaning-meaning {
+    font-size: 15px;
+  }
+
+  .sentences ul.japanese li {
+    margin-top: 0px;
+  }
+
+  .sentences .japanese .furigana {
+    font-size: 12px;
+    margin-top: 12px;
+  }
+  .sentences ul.japanese li {
+    font-size: 18px
+  }
+
+  .english {
+    font-size: 15px
+  }
+
+
+</style>
+
+<script>
+
+  const parentHeight = document.querySelector('.concept_light-representation').clientHeight;
+  const fontSize = (parentHeight * 0.5);
+  document.querySelector('.concept_light-representation').style.fontSize = `${fontSize}px`;
+
+</script>
