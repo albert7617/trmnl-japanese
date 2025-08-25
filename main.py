@@ -23,6 +23,7 @@ from pprint import pprint
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.exceptions import RequestValidationError
 from starlette.responses import FileResponse, PlainTextResponse, JSONResponse
 
 
@@ -191,6 +192,24 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 app = FastAPI(lifespan=lifespan)
+
+@app.middleware("http")
+async def strip_path_prefix(request: Request, call_next):
+    prefix = "/japanese"
+    prefix_len = len(prefix)
+    if request.url.path.startswith(prefix):
+        request.scope["path"] = request.scope["path"][prefix_len:]
+
+    response = await call_next(request)
+    return response
+
+# Disable detailed validation errors in production
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"detail": "Invalid request parameters"},  # Generic error
+    )
 
 @app.get("/favicon.ico")
 async def favicon():
