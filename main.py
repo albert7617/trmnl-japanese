@@ -182,7 +182,10 @@ def send_to_trmnl():
 
 async def updater():
     while True:
-        send_to_trmnl()
+        try:
+            send_to_trmnl()
+        except Exception as e:
+            logger.error(f"[updater] {traceback.format_exc()}")
         await asyncio.sleep(3600)
 
 @asynccontextmanager
