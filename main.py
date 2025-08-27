@@ -26,13 +26,6 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import FileResponse, PlainTextResponse, JSONResponse
 
-
-try:
-    from data import env
-    TRMNL_PLUGIN_ID = env.TRMNL_PLUGIN_ID
-except:
-    TRMNL_PLUGIN_ID = None
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logging.basicConfig(level = logging.INFO)
@@ -149,7 +142,13 @@ def send_to_trmnl():
     trnml_stat= {}
     today_str = datetime.now().strftime("%Y-%m-%d")
 
-    if TRMNL_PLUGIN_ID is None:
+    try:
+        TRMNL_API_KEY = os.environ['TRMNL_PLUGIN_API_KEY']
+    except KeyError:
+        logger.error("[send_to_trmnl] TRMNL_PLUGIN_API_KEY not set in environment variables.")
+        return
+
+    if TRMNL_API_KEY is None:
         return
 
     try:
@@ -169,7 +168,7 @@ def send_to_trmnl():
 
     payload = generate_payload_to_trmnl()
 
-    url = "https://usetrmnl.com/api/custom_plugins/" + TRMNL_PLUGIN_ID
+    url = "https://usetrmnl.com/api/custom_plugins/" + TRMNL_API_KEY
     response = requests.post(url, json=payload)
     logger.info(response)
     if response.status_code == 200:

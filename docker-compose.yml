@@ -1,0 +1,11 @@
+services:
+  trmnl-japanese:
+    build:
+      context: .
+    ports:
+      - "8091:80"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TRMNL_PLUGIN_API_KEY=${TRMNL_PLUGIN_API_KEY_JAPANESE}
+    restart: unless-stopped

@@ -1,6 +1,8 @@
 IMAGE_NAME=trmnl-japanese
 CONTAINER_NAME=trmnl-japanese
 PYTHON=py
+COMPOSE_FILE ?= docker-compose.yml
+ENV_FILE=.env
 
 OPTIONS:=
 
@@ -27,6 +29,21 @@ dockerrun: dockerclean
 
 distclean:
 	rm -rf venv
+
+composebuild:
+	docker-compose -f $(COMPOSE_FILE) build $(CONTAINER_NAME)
+
+composeup:
+	docker-compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE) up -d
+
+composedown:
+	docker-compose -f $(COMPOSE_FILE) down
+
+composeclean: composedown
+	docker-compose -f $(COMPOSE_FILE) rm -fv
+	docker volume prune -f
+
+composerebuild: composeclean composebuild composeup
 
 ################################################
 

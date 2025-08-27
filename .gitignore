@@ -3,3 +3,4 @@
 /credential
 /.python-version
 *__pycache__*
+.env
