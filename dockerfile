@@ -42,6 +42,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy only Python files and the www folder
 COPY *.py $APP_HOME/
 COPY www $APP_HOME/www/
+RUN mkdir -p $APP_HOME/www/img
 
 # Set volume and permissions
 VOLUME $DATA_DIR
