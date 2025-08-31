@@ -9,14 +9,10 @@ from typing import List, Dict
 
 import traceback
 import sys
-import os
-import json
 import asyncio
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
 import logging
 import requests
-import base64
 from pprint import pprint
 
 
@@ -24,7 +20,9 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
-from starlette.responses import FileResponse, PlainTextResponse, JSONResponse
+from starlette.responses import FileResponse, Response, JSONResponse
+
+from draw import generate_word, generate_word_date
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -208,15 +206,11 @@ async def strip_path_prefix(request: Request, call_next):
 # Disable detailed validation errors in production
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    return JSONResponse(
-        status_code=422,
-        content={"detail": "Invalid request parameters"},  # Generic error
-    )
+    return Response(status_code=404)
 
 @app.get("/favicon.ico")
 async def favicon():
     return FileResponse("www/favicon.png", media_type="image/x-icon")
-
 
 @app.get("/")
 @app.get("/index.html")
@@ -226,6 +220,25 @@ async def static_file(request: Request):
         path = '/index.html'
 
     return FileResponse(f'www{path}')
+
+
+@app.get("/api/plot")
+async def plot_file(width: int = 780, height: int = 460, word_id: int = 0):
+    path = generate_word(width, height, word_id)
+
+    return FileResponse(path, media_type="image/svg+xml")
+
+@app.get("/api/draw")
+async def draw_file(width: int = 780, height: int = 460, date_str: str = "", offset: int = 0):
+    if offset < 0 or offset > 3:
+        return Response(status_code=404)
+    try:
+        datetime.strptime(date_str, '%Y%m%d')
+        path = generate_word_date(width, height, date_str, offset)
+        return FileResponse(path, media_type="image/svg+xml")
+    except ValueError:
+        return Response(status_code=404)
+
 
 
 @app.get("/api/words")
