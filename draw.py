@@ -379,18 +379,19 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
 
     return svg_path
 
-def plot_word(word, width: int = 780, height: int = 460) -> str:
+def plot_word(word, width: int = 780, height: int = 460, name=None) -> str:
     try:
         word_id = word["word_id"]
         meaning_wrapper_id = word["meaning_wrapper_id"]
         repr = extract_representation(word["representation"])
         meaning, japanese, english = extract_meaning(word["meaning_wrapper"])
         full = FullMeaning(repr, meaning, japanese, english)
-        return plot_japanese(full, f"word-{word_id}-{meaning_wrapper_id}", width, height)
+        name = name if name is not None else f"word-{word_id}-{meaning_wrapper_id}"
+        return plot_japanese(full, name, width, height)
     except ValueError as e:
-        print(f"Error processing word_id {d['word_id']}: {e}")
-        print(d["representation"])
-        print(d["meaning_wrapper"])
+        print(f"Error processing word_id {word['word_id']}: {e}")
+        print(word["representation"])
+        print(word["meaning_wrapper"])
         return ""
 
 def generate_word(width: int = 780, height: int = 460, word_id: int = 0) -> str:
@@ -406,7 +407,15 @@ def generate_word_date(width: int = 780, height: int = 460, date_str: str = "", 
     return plot_word(data_rand[offset % 4], width, height)
 
 if __name__ == '__main__':
-    data = get_all_words()
-    for d in data:
-        plot_word(d, 780, 460)
-        # plot_word(d, int(780/2), int(460/2))
+    # data = get_all_words()
+    # for d in data:
+    #     plot_word(d, 780, 460)
+    #     # plot_word(d, int(780/2), int(460/2))
+
+    start_date = datetime(2026, 1, 1)
+    end_date = datetime(2026, 12, 31)
+
+    current_date = start_date
+    while current_date <= end_date:
+        generate_word_date(780, 460, current_date.strftime('%Y%m%d'), 0)
+        current_date += timedelta(days=1)
