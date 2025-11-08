@@ -189,11 +189,10 @@ def get_font_size_constraint_height(ctx: cairo.Context, text: str, furigana: str
             if font_size < min_size:
                 return font_size
 
-def plot_qr_code(ctx: cairo.Context, data: str, box_size: float, border: int, plot_width: int):
+def plot_qr_code(ctx: cairo.Context, data: str, qr_code_width: int, plot_width: int):
     qr = qrcode.QRCode(
         error_correction=qrcode.ERROR_CORRECT_H,
-        box_size=box_size,
-        border=border,
+        border=0,
     )
 
     qr.add_data(data)
@@ -208,18 +207,37 @@ def plot_qr_code(ctx: cairo.Context, data: str, box_size: float, border: int, pl
     # Set QR code color
     ctx.set_source_rgb(0, 0, 0)
 
-    offset_x = (plot_width - (size + 2 * border) * box_size)
+    offset_x = (plot_width - qr_code_width)
+    dot_size = qr_code_width / size
 
     # Draw QR code modules
     for y in range(size):
         for x in range(size):
             if matrix[y][x]:
                 ctx.rectangle(
-                    border * box_size + x * box_size + offset_x,
-                    border * box_size + y * box_size,
-                    box_size, box_size
+                    x * dot_size + offset_x,
+                    y * dot_size,
+                    dot_size, dot_size
                 )
                 ctx.fill()
+
+def get_center_semicolon_pos(string: str) -> int:
+    idx = 0
+    length = len(string)
+    if string[length // 2] == ';':
+        return length // 2
+
+    while True:
+        idx += 1
+        left_idx = (length // 2) - idx
+        right_idx = (length // 2) + idx
+        if left_idx >= 0 and string[left_idx] == ';':
+            return left_idx
+        if right_idx < length and string[right_idx] == ';':
+            return right_idx
+        if left_idx < 0 and right_idx >= length:
+            break
+    return -1
 
 def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 460) -> str:
     config_margin_top = 10
@@ -233,7 +251,6 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     plot_width = container_width - config_margin_left - config_margin_right
     plot_height = container_height - config_margin_top - config_margin_bottom
 
-
     svg_path = os.path.join("www", "img", f"{name}.svg")
 
     svg_surface = cairo.SVGSurface(svg_path, container_width, container_height)
@@ -243,18 +260,6 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     ctx.save()
     ctx.translate(config_margin_left, config_margin_top)
 
-    # ctx.rectangle(0, 0, plot_width, plot_height)
-    # ctx.set_line_width(1)
-    # ctx.set_source_rgb(0, 0, 0)  # Black stroke
-    # ctx.stroke()
-
-    # ctx.move_to(plot_width/2, 0)
-    # ctx.line_to(plot_width/2, plot_height)
-    # ctx.stroke()
-    # ctx.move_to(0, plot_height/2)
-    # ctx.line_to(plot_width, plot_height/2)
-    # ctx.stroke()
-
     ctx.select_font_face("Noto Sans JP",
                          cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
 
@@ -262,9 +267,10 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
 
     kanji = "".join([str(block.kanji) for block in data.word])
     jisho_url = f"https://jisho.org/search/{kanji}"
-    font_size_w = get_font_size_constraint_width(ctx, kanji, plot_width, initial_size=96, min_size=48)
-    font_size_h = get_font_size_constraint_height(ctx, kanji, "フリガナ", plot_height/2, initial_size=96, min_size=48)
+    plot_qr_code(ctx, jisho_url, 98, plot_width=plot_width)
 
+    font_size_w = get_font_size_constraint_width(ctx, kanji, plot_width, initial_size=150, min_size=48)
+    font_size_h = get_font_size_constraint_height(ctx, kanji, "フリガナ", plot_height/2, initial_size=150, min_size=48)
     font_size = min(font_size_w, font_size_h)
 
     ctx.set_font_size(font_size)
@@ -295,13 +301,34 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     ctx.select_font_face("Noto Sans JP",
                         cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
     meaning = data.meaning
-    font_size = get_font_size_constraint_width(ctx, meaning, plot_width, initial_size=18, min_size=8)
-    ctx.set_font_size(font_size)
-    extents = ctx.text_extents(meaning)
-    x_pos = (plot_width - extents.x_advance) / 2
-    y_pos = y_pos + extents.height + 10
-    ctx.move_to(x_pos, y_pos)
-    ctx.show_text(meaning)
+
+    semicolon_pos = get_center_semicolon_pos(meaning)
+    meaning_font_size = 20
+    meaning_padding_top = 20
+    font_size = get_font_size_constraint_width(ctx, meaning, plot_width, initial_size=meaning_font_size, min_size=8)
+    ctx.set_font_size(meaning_font_size)
+
+    if font_size != meaning_font_size and semicolon_pos != -1:
+        # break into two lines
+        meaning_left  = meaning[:semicolon_pos] + ";"
+        meaning_right = meaning[semicolon_pos+2:]
+        extents = ctx.text_extents(meaning_left)
+        x_pos = (plot_width - extents.x_advance) / 2
+        y_pos = y_pos + extents.height + meaning_padding_top
+        meaning_left_height = extents.height
+        ctx.move_to(x_pos, y_pos)
+        ctx.show_text(meaning_left)
+        extents = ctx.text_extents(meaning_right)
+        x_pos = (plot_width - extents.x_advance) / 2
+        y_pos = y_pos + meaning_left_height
+        ctx.move_to(x_pos, y_pos)
+        ctx.show_text(meaning_right)
+    else:
+        extents = ctx.text_extents(meaning)
+        x_pos = (plot_width - extents.x_advance) / 2
+        y_pos = y_pos + extents.height + meaning_padding_top
+        ctx.move_to(x_pos, y_pos)
+        ctx.show_text(meaning)
 
     japanese_sentence = ""
     for furigana, kanji in data.japanese:
@@ -346,13 +373,6 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     x_pos = (plot_width - extents.x_advance) / 2
     ctx.move_to(x_pos, y_pos_en)
     ctx.show_text(data.english)
-
-    if plot_width < 400:
-        box_size = 1.5
-    else:
-        box_size = 3.0
-
-    plot_qr_code(ctx, jisho_url, box_size=box_size, border=0, plot_width=plot_width)
 
     ctx.restore()
     svg_surface.finish()
