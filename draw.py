@@ -221,6 +221,21 @@ def plot_qr_code(ctx: cairo.Context, data: str, qr_code_width: int, plot_width: 
                 )
                 ctx.fill()
 
+    # Draw "white dots" of QR code
+    ctx.set_source_rgb(255, 255, 255)
+
+    for y in range(size):
+        for x in range(size):
+            if not matrix[y][x]:
+                ctx.rectangle(
+                    x * dot_size + offset_x,
+                    y * dot_size,
+                    dot_size, dot_size
+                )
+                ctx.fill()
+
+    ctx.set_source_rgb(0, 0, 0)
+
 def get_center_semicolon_pos(string: str) -> int:
     idx = 0
     length = len(string)
