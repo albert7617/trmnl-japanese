@@ -282,7 +282,6 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
 
     kanji = "".join([str(block.kanji) for block in data.word])
     jisho_url = f"https://jisho.org/search/{kanji}"
-    plot_qr_code(ctx, jisho_url, 98, plot_width=plot_width)
 
     font_size_w = get_font_size_constraint_width(ctx, kanji, plot_width, initial_size=150, min_size=48)
     font_size_h = get_font_size_constraint_height(ctx, kanji, "フリガナ", plot_height/2, initial_size=150, min_size=48)
@@ -389,6 +388,8 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     ctx.move_to(x_pos, y_pos_en)
     ctx.show_text(data.english)
 
+    plot_qr_code(ctx, jisho_url, 98, plot_width=plot_width)
+
     ctx.restore()
     svg_surface.finish()
 
@@ -432,5 +433,5 @@ if __name__ == '__main__':
 
     current_date = start_date
     while current_date <= end_date:
-        generate_word_date(780, 460, current_date.strftime('%Y%m%d'), 0)
+        generate_word_date(780, 420, current_date.strftime('%Y%m%d'), 0)
         current_date += timedelta(days=1)
