@@ -1,5 +1,4 @@
 import cairo
-import cairosvg
 import hashlib
 from datetime import datetime, timedelta
 from typing import Dict, Any, TypedDict
@@ -283,6 +282,7 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
 
     kanji = "".join([str(block.kanji) for block in data.word])
     jisho_url = f"https://jisho.org/search/{kanji}"
+    plot_qr_code(ctx, jisho_url, 98, plot_width=plot_width)
 
     font_size_w = get_font_size_constraint_width(ctx, kanji, plot_width, initial_size=150, min_size=48)
     font_size_h = get_font_size_constraint_height(ctx, kanji, "フリガナ", plot_height/2, initial_size=150, min_size=48)
@@ -389,8 +389,6 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     ctx.move_to(x_pos, y_pos_en)
     ctx.show_text(data.english)
 
-    plot_qr_code(ctx, jisho_url, 98, plot_width=plot_width)
-
     ctx.restore()
     svg_surface.finish()
 
@@ -422,11 +420,6 @@ def generate_word_date(width: int = 780, height: int = 460, date_str: str = "", 
     random.seed(seed)
     data_rand = random.sample(data, 4)
     return plot_word(data_rand[offset % 4], width, height)
-
-def convert_svg_to_png(svg_path: str, width: int, height: int) -> str:
-    png_path = svg_path.replace('.svg', '.png')
-    cairosvg.svg2png(url=svg_path, write_to=png_path, output_width=width, output_height=height)
-    return png_path
 
 if __name__ == '__main__':
     # data = get_all_words()
