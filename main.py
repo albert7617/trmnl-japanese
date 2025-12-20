@@ -22,7 +22,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import FileResponse, Response, JSONResponse
 
-from draw import generate_word, generate_word_date
+from draw import convert_svg_to_png, generate_word, generate_word_date
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -235,7 +235,8 @@ async def draw_file(width: int = 780, height: int = 460, date_str: str = "", off
     try:
         datetime.strptime(date_str, '%Y%m%d')
         path = generate_word_date(width, height, date_str, offset)
-        return FileResponse(path, media_type="image/svg+xml")
+        path = convert_svg_to_png(path, width, height)
+        return FileResponse(path, media_type="image/png")
     except ValueError:
         return Response(status_code=404)
 
