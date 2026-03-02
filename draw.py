@@ -260,6 +260,18 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     config_margin_bottom = 10
     config_margin_left = 10
 
+    show_dr_code = True
+
+    meaning_font_size = 20
+
+    if height < 200 and width < 400:
+        show_dr_code = False
+        meaning_font_size = 14
+
+    if height < 200:
+        config_margin_bottom = 3
+        config_margin_top = 3
+
     container_width  = width
     container_height = height
 
@@ -317,7 +329,6 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     meaning = data.meaning
 
     semicolon_pos = get_center_semicolon_pos(meaning)
-    meaning_font_size = 20
     meaning_padding_top = 20
     font_size = get_font_size_constraint_width(ctx, meaning, plot_width, initial_size=meaning_font_size, min_size=8)
     ctx.set_font_size(meaning_font_size)
@@ -344,6 +355,8 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
         ctx.move_to(x_pos, y_pos)
         ctx.show_text(meaning)
 
+    y_pos_en_meaning = y_pos + extents.height
+
     japanese_sentence = ""
     for furigana, kanji in data.japanese:
         japanese_sentence += kanji if kanji is not None else ""
@@ -357,13 +370,34 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     ctx.set_font_size(font_size_en)
     height_english = ctx.text_extents("English").height
 
-    ctx.set_font_size(font_size_jp)
-    extents = ctx.text_extents(japanese_sentence)
-    x_pos = (plot_width - extents.x_advance) / 2
-
     y_pos_en = plot_height - 10
     y_pos_kanji = y_pos_en - height_english - 5
     y_pos_furigana = y_pos_kanji - height_kanji
+
+    # Check if meaning overlaps with japanese sentence, if so, reduce font size
+    size_reduction_step = 1
+    initial_size_jp = font_size_jp
+    initial_size_en = font_size_en
+    while (y_pos_en_meaning > y_pos_furigana):
+        font_size_jp = get_font_size_constraint_width(ctx, japanese_sentence, plot_width, initial_size=initial_size_jp-size_reduction_step, min_size=8)
+        font_size_en = get_font_size_constraint_width(ctx, data.english, plot_width, initial_size=initial_size_en-size_reduction_step, min_size=8)
+        ctx.set_font_size(font_size_jp)
+        height_kanji = ctx.text_extents("漢字").height
+        ctx.set_font_size(font_size_jp/3)
+        height_furigana = ctx.text_extents("ふりがな").height
+        ctx.set_font_size(font_size_en)
+        height_english = ctx.text_extents("English").height
+
+        y_pos_en = plot_height - 3
+        y_pos_kanji = y_pos_en - height_english - 5
+        y_pos_furigana = y_pos_kanji - height_kanji
+        size_reduction_step += 1
+        if size_reduction_step == 10:
+            break
+
+    ctx.set_font_size(font_size_jp)
+    extents = ctx.text_extents(japanese_sentence)
+    x_pos = (plot_width - extents.x_advance) / 2
 
     for furigana, kanji in data.japanese:
         if kanji is None:
@@ -388,7 +422,8 @@ def plot_japanese(data: FullMeaning, name: str, width: int = 780, height: int = 
     ctx.move_to(x_pos, y_pos_en)
     ctx.show_text(data.english)
 
-    plot_qr_code(ctx, jisho_url, 98, plot_width=plot_width)
+    if show_dr_code:
+        plot_qr_code(ctx, jisho_url, 98, plot_width=plot_width)
 
     ctx.restore()
     svg_surface.finish()
@@ -435,3 +470,6 @@ if __name__ == '__main__':
     while current_date <= end_date:
         generate_word_date(780, 420, current_date.strftime('%Y%m%d'), 0)
         current_date += timedelta(days=1)
+
+#FIXME: Edge case example
+# <div class="meaning-wrapper"><div class="meaning-definition zero-padding"><span class="meaning-meaning">counter for gunshots, bursts of gas, etc.; counter for bullets, bombs, etc.; counter for blows (punches); counter for jokes, puns, etc.; counter for ideas, thoughts or guesses</span></div><span class="sentences zero-padding"><div class="sentence" style=""><ul class="japanese japanese_gothic clearfix" lang="ja"><li class="clearfix"><span class="furigana">かれ</span><span class="unlinked">彼</span></li><li class="clearfix"><span class="unlinked">は</span></li>３<li class="clearfix"><span class="furigana">はつ</span><span class="unlinked"><span class="hit">発</span></span></li><li class="clearfix"><span class="furigana">う</span><span class="unlinked">撃った</span></li>。</ul><span class="english" lang="en">He fired three shots.</span></div></span></div>
